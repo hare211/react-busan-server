@@ -1,0 +1,49 @@
+package com.sist.web.service;
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import com.sist.web.dao.UserRepository;
+import com.sist.web.dto.UserDTO;
+import com.sist.web.entity.UserEntity;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class UserServiceImpl implements UserService{
+	
+	private final UserRepository uDao;
+	private final BCryptPasswordEncoder passwordEncoder;
+	
+	@Override
+	public UserDTO login(String username, String password) {
+		UserEntity user = uDao.findByUsername(username)
+				.orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
+		
+		if (!passwordEncoder.matches(password, user.getPassword())) {
+			throw new RuntimeException("비밀번호가 일치하지 않습니다.");
+		}
+		
+		return UserDTO.builder()
+				.username(user.getUsername())
+				.nickname(user.getNickname())
+				.email(user.getEmail())
+				.build();
+	}
+	
+	@Override
+	public void register(UserDTO dto) {
+		if (uDao.findByUsername(dto.getUsername()).isPresent()) {
+			throw new RuntimeException("이미 존재하는 사용자입니다.");
+		}
+		
+		UserEntity user = UserEntity.builder()
+				.username(dto.getUsername())
+				.password(passwordEncoder.encode(dto.getPassword()))
+				.nickname(dto.getNickname())
+				.email(dto.getEmail())
+				.build();
+		uDao.save(user);
+		
+	}
+}
