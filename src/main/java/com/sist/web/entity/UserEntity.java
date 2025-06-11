@@ -40,7 +40,16 @@ public class UserEntity {
 	protected void onCreate() {
 		this.createdAt = LocalDateTime.now();
 	}
-	
-	
-	
 }
+/*
+ * 
+ create table users(
+	id bigint auto_increment primary key,
+    username varchar(50) not null unique,
+    password varchar(100) not null,
+    nickname varchar(50),
+    email varchar(100),
+    create_at datetime default current_timestamp
+);
+ 
+ */
