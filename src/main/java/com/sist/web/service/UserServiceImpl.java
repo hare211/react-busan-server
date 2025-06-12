@@ -3,8 +3,11 @@ package com.sist.web.service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.sist.web.dao.UserRepository;
+import com.sist.web.dto.LoginRequestDTO;
+import com.sist.web.dto.LoginResponseDTO;
 import com.sist.web.dto.UserDTO;
 import com.sist.web.entity.UserEntity;
+import com.sist.web.util.JwtUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -14,21 +17,18 @@ public class UserServiceImpl implements UserService{
 	
 	private final UserRepository uDao;
 	private final BCryptPasswordEncoder passwordEncoder;
+	private final JwtUtil jwtUtil;
 	
 	@Override
-	public UserDTO login(String username, String password) {
-		UserEntity user = uDao.findByUsername(username)
+	public LoginResponseDTO login(LoginRequestDTO requestDTO) {
+		UserEntity user = uDao.findByUsername(requestDTO.getUsername())
 				.orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
 		
-		if (!passwordEncoder.matches(password, user.getPassword())) {
+		if (!passwordEncoder.matches(requestDTO.getPassword(), user.getPassword())) {
 			throw new RuntimeException("비밀번호가 일치하지 않습니다.");
 		}
-		
-		return UserDTO.builder()
-				.username(user.getUsername())
-				.nickname(user.getNickname())
-				.email(user.getEmail())
-				.build();
+		String token = jwtUtil.generateToken(user.getUsername());
+		return new LoginResponseDTO(token, user.getUsername(), user.getNickname());
 	}
 	
 	@Override
